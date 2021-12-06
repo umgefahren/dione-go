@@ -1,0 +1,15 @@
+syntax = "proto3";
+package dione_go;
+
+option go_package = "messages/";
+
+message GeneralRequest {
+  oneof general_request_kind {
+    ClosestProviderRequest closest_provider_request = 1;
+  }
+}
+
+message ClosestProviderRequest {
+  string key = 1;
+}
+
