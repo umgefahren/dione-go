@@ -1,8 +1,12 @@
 package main
 
 import (
+	ctx "context"
+	"fmt"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
@@ -24,4 +28,24 @@ func initMdns(peerhost host.Host, rendezvous string) chan peer.AddrInfo {
 	}
 
 	return n.PeerChan
+}
+
+func connectMdns(h host.Host, dht *dht.IpfsDHT, channel chan peer.AddrInfo) {
+	for info := range channel {
+		if info.ID == h.ID() {
+			continue
+		}
+		h.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
+		fmt.Printf("Connecting to %v\n", info)
+		err := h.Connect(ctx.TODO(), info)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Added to peerstore")
+		res, err := dht.RoutingTable().TryAddPeer(info.ID, false, true)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Adding to dht routing table returned %v\n", res)
+	}
 }
