@@ -42,10 +42,9 @@ func connectMdns(h host.Host, dht *dht.IpfsDHT, channel chan peer.AddrInfo) {
 			panic(err)
 		}
 		fmt.Println("Added to peerstore")
-		res, err := dht.RoutingTable().TryAddPeer(info.ID, false, true)
+		err = dht.Ping(ctx.TODO(), info.ID)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Adding to dht routing table returned %v\n", res)
 	}
 }

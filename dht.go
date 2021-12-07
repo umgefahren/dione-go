@@ -27,6 +27,7 @@ func newDht(h host.Host) *dht.IpfsDHT {
 		dht.NamespacedValidator("kad-m", CustomValidator{}),
 		dht.ProtocolPrefix("dione"),
 		dht.ProtocolExtension("kad"),
+		dht.Mode(dht.ModeServer),
 	)
 	if err != nil {
 		panic(err)

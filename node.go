@@ -39,7 +39,7 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		fmt.Printf("Chose key \"%v\"\n", result)
 		dht.RoutingTable().Print()
 		closestPeers, err := dht.GetClosestPeers(ctx.TODO(), result)
-		for closestPeer := range closestPeers {
+		for _, closestPeer := range closestPeers {
 			fmt.Printf("Closest peer %v\n", closestPeer)
 		}
 	case "refresh-rt":
@@ -58,7 +58,7 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 			panic(err)
 		}
 		key := fmt.Sprintf("/kad-m/%v", keyraw)
-		fmt.Printf("Key %v", key)
+		fmt.Printf("Key %v\n", key)
 		prompt = promptui.Prompt{
 			Label: "Value",
 		}
@@ -66,6 +66,7 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		if err != nil {
 			panic(err)
 		}
+		fmt.Printf("Value %v\n", value)
 		valueData := []byte(value)
 		rec := record.MakePutRecord(key, valueData)
 		data, err := rec.Marshal()
@@ -77,6 +78,19 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		if err != nil {
 			panic(err)
 		}
+	case "get":
+		prompt := promptui.Prompt{
+			Label: "Key",
+		}
+		keyraw, err := prompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		key := fmt.Sprintf("/kad-m/%v", keyraw)
+		fmt.Printf("Key %v\n", key)
+		valueData, err := dht.GetValue(ctx.TODO(), key)
+		valueString := string(valueData)
+		fmt.Printf("Got value %#v for key %v\n", valueString, key)
 	}
 
 }
