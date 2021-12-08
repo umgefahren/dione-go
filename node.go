@@ -4,6 +4,7 @@ import (
 	ctx "context"
 	"errors"
 	"fmt"
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	record "github.com/libp2p/go-libp2p-record"
@@ -17,6 +18,8 @@ func validate(input string) error {
 		"closest",
 		"put",
 		"get",
+		"put-provider",
+		"get-provider",
 		"refresh-rt":
 		return nil
 	}
@@ -91,6 +94,43 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		valueData, err := dht.GetValue(ctx.TODO(), key)
 		valueString := string(valueData)
 		fmt.Printf("Got value %#v for key %v\n", valueString, key)
+	case "put-provider":
+		prompt := promptui.Prompt{
+			Label: "Key",
+		}
+		keyRaw, err := prompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		key := fmt.Sprintf("%v", keyRaw)
+		fmt.Printf("Key %v\n", key)
+		c, err := cid.Decode(key)
+		if err != nil {
+			panic(err)
+		}
+		err = dht.Provide(ctx.TODO(), c, true)
+		if err != nil {
+			panic(err)
+		}
+	case "get-provider":
+		prompt := promptui.Prompt{
+			Label: "Key",
+		}
+		keyRaw, err := prompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		key := fmt.Sprintf("%v", keyRaw)
+		fmt.Printf("Key %v\n", key)
+		c, err := cid.Decode(key)
+		if err != nil {
+			panic(err)
+		}
+		peers, err := dht.FindProviders(ctx.TODO(), c)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Found peers %v\n", peers)
 	}
 
 }
