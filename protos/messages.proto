@@ -13,3 +13,6 @@ message ClosestProviderRequest {
   string key = 1;
 }
 
+message ClosestProviderResponse {
+  repeated string provider = 1;
+}

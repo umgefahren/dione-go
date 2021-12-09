@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/protocol"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	record "github.com/libp2p/go-libp2p-record"
 	"github.com/manifoldco/promptui"
+	"github.com/multiformats/go-multihash"
 )
+
+const requestId = protocol.ID("req")
 
 func validate(input string) error {
 	switch input {
@@ -20,13 +24,14 @@ func validate(input string) error {
 		"get",
 		"put-provider",
 		"get-provider",
+		"connect",
 		"refresh-rt":
 		return nil
 	}
 	return errors.New("Invalid input")
 }
 
-func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
+func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- GeneralCommand) {
 	switch input {
 	case "info":
 		fmt.Printf("Current ID is %v\n", h.ID())
@@ -40,8 +45,18 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 			panic(err)
 		}
 		fmt.Printf("Chose key \"%v\"\n", result)
-		dht.RoutingTable().Print()
-		closestPeers, err := dht.GetClosestPeers(ctx.TODO(), result)
+
+		resp := make(chan []peer.ID, 1)
+
+		command := new(GeneralCommand)
+		closest := new(ClosestCommand)
+		closest.key = result
+		closest.response = resp
+		command.closest = closest
+
+		dhtHan <- *command
+		closestPeers := <-resp
+
 		for _, closestPeer := range closestPeers {
 			fmt.Printf("Closest peer %v\n", closestPeer)
 		}
@@ -60,8 +75,6 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		if err != nil {
 			panic(err)
 		}
-		key := fmt.Sprintf("/kad-m/%v", keyraw)
-		fmt.Printf("Key %v\n", key)
 		prompt = promptui.Prompt{
 			Label: "Value",
 		}
@@ -71,16 +84,10 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		}
 		fmt.Printf("Value %v\n", value)
 		valueData := []byte(value)
-		rec := record.MakePutRecord(key, valueData)
-		data, err := rec.Marshal()
-		if err != nil {
-			panic(err)
-		}
-		err = dht.PutValue(ctx.TODO(), key, data)
-
-		if err != nil {
-			panic(err)
-		}
+		generalCommand := new(GeneralCommand)
+		put := newPutCommand(keyraw, valueData)
+		generalCommand.put = &put
+		dhtHan <- *generalCommand
 	case "get":
 		prompt := promptui.Prompt{
 			Label: "Key",
@@ -89,11 +96,15 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		if err != nil {
 			panic(err)
 		}
-		key := fmt.Sprintf("/kad-m/%v", keyraw)
-		fmt.Printf("Key %v\n", key)
-		valueData, err := dht.GetValue(ctx.TODO(), key)
+
+		generalCommand := new(GeneralCommand)
+		get, response := newGetCommand(keyraw)
+		generalCommand.get = &get
+		dhtHan <- *generalCommand
+		valueData := <-response
+
 		valueString := string(valueData)
-		fmt.Printf("Got value %#v for key %v\n", valueString, key)
+		fmt.Printf("Got value %#v for key %v\n", valueString, keyraw)
 	case "put-provider":
 		prompt := promptui.Prompt{
 			Label: "Key",
@@ -104,7 +115,12 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		}
 		key := fmt.Sprintf("%v", keyRaw)
 		fmt.Printf("Key %v\n", key)
-		c, err := cid.Decode(key)
+		pref := cid.Prefix{
+			Version: 1,
+			Codec:   cid.Raw,
+			MhType:  multihash.SHA2_256,
+		}
+		c, err := pref.Sum([]byte(key))
 		if err != nil {
 			panic(err)
 		}
@@ -122,7 +138,12 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 		}
 		key := fmt.Sprintf("%v", keyRaw)
 		fmt.Printf("Key %v\n", key)
-		c, err := cid.Decode(key)
+		pref := cid.Prefix{
+			Version: 1,
+			Codec:   cid.Raw,
+			MhType:  multihash.SHA2_256,
+		}
+		c, err := pref.Sum([]byte(key))
 		if err != nil {
 			panic(err)
 		}
@@ -131,6 +152,33 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string) {
 			panic(err)
 		}
 		fmt.Printf("Found peers %v\n", peers)
+	case "connect":
+		prompt := promptui.Prompt{
+			Label: "Key",
+		}
+		keyraw, err := prompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		key := fmt.Sprintf("/kad-m/%v", keyraw)
+		fmt.Printf("Key %v\n", key)
+
+		closestPeers, err := dht.GetClosestPeers(ctx.TODO(), key)
+		closestPeer := closestPeers[0]
+		fmt.Printf("Closest Peer %v\n", closestPeer)
+		stream, err := h.NewStream(ctx.TODO(), closestPeer, requestId)
+		if err != nil {
+			panic(err)
+		}
+		handler := &Handler{}
+		message := new(GeneralRequest)
+		closest := new(GeneralRequest_ClosestProviderRequest)
+		closestRequest := new(ClosestProviderRequest)
+		closestRequest.Key = "Hey there"
+		closest.ClosestProviderRequest = closestRequest
+		message.GeneralRequestKind = closest
+
+		handler.writeMessage(stream, message)
 	}
 
 }
@@ -153,6 +201,14 @@ func main() {
 
 	mdnsFound := initMdns(h, "dione")
 	go connectMdns(h, DHT, mdnsFound)
+
+	handler := &Handler{}
+	h.SetStreamHandler(requestId, handler.handleStream)
+
+	dhtHan, inputs := newDhtHandler(DHT)
+
+	go dhtHan.handle()
+
 	prompt := promptui.Prompt{
 		Label:    "",
 		Validate: validate,
@@ -164,6 +220,6 @@ func main() {
 			panic(err)
 		}
 		fmt.Printf("You chose %v\n", result)
-		handleInput(h, DHT, result)
+		handleInput(h, DHT, result, inputs)
 	}
 }
