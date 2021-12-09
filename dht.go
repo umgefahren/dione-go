@@ -49,6 +49,14 @@ type ClosestCommand struct {
 	response chan<- []peer.ID
 }
 
+func newClosestCommand(key string) (ClosestCommand, chan []peer.ID) {
+	ret := new(ClosestCommand)
+	ret.key = key
+	response := make(chan []peer.ID, 1)
+	ret.response = response
+	return *ret, response
+}
+
 type PutCommand struct {
 	key   string
 	value []byte

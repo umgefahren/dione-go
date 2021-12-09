@@ -6,6 +6,14 @@ option go_package = "./;main";
 message GeneralRequest {
   oneof general_request_kind {
     ClosestProviderRequest closest_provider_request = 1;
+    InitTunnelRequest init_tunnel_request = 2;
+  }
+}
+
+message GeneralResponse {
+  oneof general_response_kind {
+    ClosestProviderResponse closest_provider_response = 1;
+    InitTunnelResponse init_tunnel_response = 2;
   }
 }
 
@@ -15,4 +23,19 @@ message ClosestProviderRequest {
 
 message ClosestProviderResponse {
   repeated string provider = 1;
+}
+
+message InitTunnelRequest {
+  bytes pk      = 1;
+  string target = 2;
+}
+
+message InitTunnelResponse {
+  ConnectionStatus status = 1;
+  bytes ciphertext        = 2;
+}
+
+enum ConnectionStatus {
+  SUCCESS = 0;
+  FAILURE = 1;
 }

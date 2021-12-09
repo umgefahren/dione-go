@@ -179,6 +179,10 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- Gene
 		message.GeneralRequestKind = closest
 
 		handler.writeMessage(stream, message)
+
+		response := new(GeneralResponse)
+		handler.readMessage(stream, response)
+		fmt.Println(response.String())
 	}
 
 }
@@ -202,12 +206,14 @@ func main() {
 	mdnsFound := initMdns(h, "dione")
 	go connectMdns(h, DHT, mdnsFound)
 
-	handler := &Handler{}
-	h.SetStreamHandler(requestId, handler.handleStream)
-
 	dhtHan, inputs := newDhtHandler(DHT)
 
 	go dhtHan.handle()
+
+	handler := &Handler{}
+	handler.h = h
+	handler.dhtInput = inputs
+	h.SetStreamHandler(requestId, handler.handleStream)
 
 	prompt := promptui.Prompt{
 		Label:    "",
