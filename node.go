@@ -170,19 +170,35 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- Gene
 		if err != nil {
 			panic(err)
 		}
+
+		generalReq := new(GeneralRequest)
+		generalClosestReq := new(GeneralRequest_ClosestProviderRequest)
+		generalClosest := new(ClosestProviderRequest)
+		generalClosest.Key = keyraw
+		generalClosestReq.ClosestProviderRequest = generalClosest
+		generalReq.GeneralRequestKind = generalClosestReq
+
+		tun := newTunnel(stream, closestPeers[1])
+
+		defer func(tun tunnel) {
+			fmt.Println("closing the tunnel")
+			err := tun.Close()
+			if err != nil {
+				panic(err)
+			}
+		}(tun)
+
+		tun2 := newTunnel(tun, closestPeers[2])
+
 		handler := &Handler{}
-		message := new(GeneralRequest)
-		closest := new(GeneralRequest_ClosestProviderRequest)
-		closestRequest := new(ClosestProviderRequest)
-		closestRequest.Key = "Hey there"
-		closest.ClosestProviderRequest = closestRequest
-		message.GeneralRequestKind = closest
+		handler.writeMessage(tun2, generalReq)
 
-		handler.writeMessage(stream, message)
-
-		response := new(GeneralResponse)
-		handler.readMessage(stream, response)
-		fmt.Println(response.String())
+		generalResp := new(GeneralResponse)
+		err = handler.readMessage(tun2, generalResp)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Read Message %+v\n", generalResp)
 	}
 
 }
@@ -190,7 +206,7 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- Gene
 func main() {
 	h, DHT := NewHost(0)
 	defer func(h host.Host) {
-		fmt.Println("Closing")
+		fmt.Println("Closing Host")
 		err := h.Close()
 		if err != nil {
 			panic(err)
@@ -213,14 +229,14 @@ func main() {
 	handler := &Handler{}
 	handler.h = h
 	handler.dhtInput = inputs
-	h.SetStreamHandler(requestId, handler.handleStream)
+	go h.SetStreamHandler(requestId, handler.handleStream)
 
 	prompt := promptui.Prompt{
 		Label:    "",
 		Validate: validate,
 	}
 
-	for true {
+	for {
 		result, err := prompt.Run()
 		if err != nil {
 			panic(err)
