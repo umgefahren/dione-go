@@ -1,62 +1,62 @@
 syntax = "proto3";
 package dione_go;
 
-option go_package = "./;main";
+option go_package = "./;dione";
 
-message GeneralRequest {
+message generalRequest {
   oneof general_request_kind {
-    ClosestProviderRequest closest_provider_request = 1;
-    InitTunnelRequest init_tunnel_request = 2;
-    PutKadRequest put_kad_request = 3;
-    GetKadRequest get_kad_request = 4;
+    closestProviderRequest closest_provider_request = 1;
+    initTunnelRequest init_tunnel_request = 2;
+    putKadRequest put_kad_request = 3;
+    getKadRequest get_kad_request = 4;
   }
 }
 
-message GeneralResponse {
+message generalResponse {
   oneof general_response_kind {
-    ClosestProviderResponse closest_provider_response = 1;
-    InitTunnelResponse init_tunnel_response = 2;
-    PutKadResponse put_kad_response = 3;
-    GetKadResponse get_kad_response = 4;
+    closestProviderResponse closest_provider_response = 1;
+    initTunnelResponse init_tunnel_response = 2;
+    putKadResponse put_kad_response = 3;
+    getKadResponse get_kad_response = 4;
   }
 }
 
-message ClosestProviderRequest {
+message closestProviderRequest {
   string key = 1;
 }
 
-message ClosestProviderResponse {
+message closestProviderResponse {
   repeated string provider = 1;
 }
 
-message InitTunnelRequest {
+message initTunnelRequest {
   bytes pk      = 1;
   string target = 2;
 }
 
-message InitTunnelResponse {
-  ConnectionStatus status = 1;
+message initTunnelResponse {
+  connectionStatus status = 1;
   bytes ciphertext        = 2;
 }
 
-enum ConnectionStatus {
+enum connectionStatus {
   SUCCESS = 0;
   FAILURE = 1;
 }
 
-message PutKadRequest {
+message putKadRequest {
   string key = 1;
   bytes  value = 2;
 }
 
-message PutKadResponse {
-  ConnectionStatus status = 1;
+message putKadResponse {
+  connectionStatus status = 1;
 }
 
-message GetKadRequest {
+message getKadRequest {
   string key = 1;
 }
 
-message GetKadResponse {
+message getKadResponse {
   bytes value = 1;
 }
