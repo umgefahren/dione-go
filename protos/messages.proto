@@ -7,6 +7,8 @@ message GeneralRequest {
   oneof general_request_kind {
     ClosestProviderRequest closest_provider_request = 1;
     InitTunnelRequest init_tunnel_request = 2;
+    PutKadRequest put_kad_request = 3;
+    GetKadRequest get_kad_request = 4;
   }
 }
 
@@ -14,6 +16,8 @@ message GeneralResponse {
   oneof general_response_kind {
     ClosestProviderResponse closest_provider_response = 1;
     InitTunnelResponse init_tunnel_response = 2;
+    PutKadResponse put_kad_response = 3;
+    GetKadResponse get_kad_response = 4;
   }
 }
 
@@ -38,4 +42,21 @@ message InitTunnelResponse {
 enum ConnectionStatus {
   SUCCESS = 0;
   FAILURE = 1;
+}
+
+message PutKadRequest {
+  string key = 1;
+  bytes  value = 2;
+}
+
+message PutKadResponse {
+  ConnectionStatus status = 1;
+}
+
+message GetKadRequest {
+  string key = 1;
+}
+
+message GetKadResponse {
+  bytes value = 1;
 }

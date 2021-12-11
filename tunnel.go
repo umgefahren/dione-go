@@ -51,11 +51,14 @@ func newTunnel(stream io.ReadWriteCloser, target peer.ID) tunnel {
 	handler := &Handler{}
 	handler.writeMessage(stream, generalRequest)
 
+	fmt.Println("Written request")
+
 	generalResp := new(GeneralResponse)
 	err = handler.readMessage(stream, generalResp)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Response done")
 
 	tunnelResp := generalResp.GetInitTunnelResponse()
 	ct := make([]byte, kyber1024.CiphertextSize)
@@ -84,12 +87,23 @@ func newTunnel(stream io.ReadWriteCloser, target peer.ID) tunnel {
 	tun.writer = encWriter
 	tun.netStream = stream
 
-	decrypted := make([]byte, len([]byte("Hello World")))
-	_, err = encReader.Read(decrypted)
+	/*
+		decrypted := make([]byte, len([]byte("Hello World")))
+		_, err = encReader.Read(decrypted)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Decrypted %v\n", string(decrypted))
+
+	*/
+
+	return *tun
+}
+
+func closeTunnel(tun tunnel) {
+	fmt.Println("Closing the tunnel")
+	err := tun.Close()
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Printf("Decrypted %v\n", string(decrypted))
-
-	return *tun
 }

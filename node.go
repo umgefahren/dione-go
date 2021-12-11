@@ -11,6 +11,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/manifoldco/promptui"
 	"github.com/multiformats/go-multihash"
+	"io"
 )
 
 const requestId = protocol.ID("req")
@@ -29,6 +30,156 @@ func validate(input string) error {
 		return nil
 	}
 	return errors.New("Invalid input")
+}
+
+type commandRound struct {
+	connection io.ReadWriteCloser
+}
+
+func (c commandRound) closest() []peer.ID {
+	generalRequest := new(GeneralRequest)
+	generalClosestRequest := new(GeneralRequest_ClosestProviderRequest)
+	closestRequest := new(ClosestProviderRequest)
+
+	prompt := promptui.Prompt{
+		Label: "Key",
+	}
+	result, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	closestRequest.Key = result
+	generalClosestRequest.ClosestProviderRequest = closestRequest
+	generalRequest.GeneralRequestKind = generalClosestRequest
+
+	handler := &Handler{}
+	handler.writeMessage(c.connection, generalRequest)
+
+	generalResponse := new(GeneralResponse)
+	err = handler.readMessage(c.connection, generalResponse)
+	if err != nil {
+		return nil
+	}
+	providers := generalResponse.GetClosestProviderResponse().Provider
+
+	peers := make([]peer.ID, 0)
+	for _, provider := range providers {
+		id, err := peer.Decode(provider)
+		if err != nil {
+			panic(peers)
+		}
+		peers = append(peers, id)
+	}
+	return peers
+}
+
+func (c commandRound) put() {
+	prompt := promptui.Prompt{
+		Label: "Key",
+	}
+	key, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	prompt = promptui.Prompt{
+		Label: "Value",
+	}
+	value, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	valuedata := []byte(value)
+	generalRequest := new(GeneralRequest)
+	generalPutRequest := new(GeneralRequest_PutKadRequest)
+	putRequest := new(PutKadRequest)
+	putRequest.Key = key
+	putRequest.Value = valuedata
+	generalPutRequest.PutKadRequest = putRequest
+	generalRequest.GeneralRequestKind = generalPutRequest
+
+	handle := &Handler{}
+	handle.writeMessage(c.connection, generalRequest)
+
+	generalResponse := new(GeneralResponse)
+	err = handle.readMessage(c.connection, generalResponse)
+	if err != nil {
+		panic(err)
+	}
+	putKadResponse := generalResponse.GetPutKadResponse()
+
+	fmt.Printf("Response Put Kad %v\n", putKadResponse.Status)
+}
+
+func (c commandRound) get() {
+	prompt := promptui.Prompt{
+		Label: "Key",
+	}
+	key, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	generalRequest := new(GeneralRequest)
+	generalGetRequest := new(GeneralRequest_GetKadRequest)
+	getRequest := new(GetKadRequest)
+	getRequest.Key = key
+	generalGetRequest.GetKadRequest = getRequest
+	generalRequest.GeneralRequestKind = generalGetRequest
+
+	handler := &Handler{}
+	handler.writeMessage(c.connection, generalRequest)
+
+	generalResponse := new(GeneralResponse)
+
+	err = handler.readMessage(c.connection, generalResponse)
+	if err != nil {
+		panic(err)
+	}
+
+	getResponse := generalResponse.GetGetKadResponse()
+
+	value := string(getResponse.Value)
+	fmt.Printf("Got Value: %v\n", value)
+}
+
+func (c commandRound) newRound() bool {
+	prompt := promptui.Select{
+		Label: "Action",
+		Items: []string{"Connect", "Closest", "Put", "Get", "Close"},
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	switch result {
+	case "Closest":
+		closest := c.closest()
+		fmt.Printf("Closest peers %v\n", closest)
+	case "Connect":
+		closest := c.closest()
+		closes := closest[0]
+		fmt.Printf("Connecting to peer %v\n", closes)
+
+		tun := newTunnel(c.connection, closes)
+
+		defer closeTunnel(tun)
+
+		nc := new(commandRound)
+		nc.connection = tun
+		for {
+			res := nc.newRound()
+			if res {
+				break
+			}
+		}
+	case "Put":
+		c.put()
+	case "Get":
+		c.get()
+	case "Close":
+		_ = c.connection.Close()
+		return true
+	}
+	return false
 }
 
 func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- GeneralCommand) {
@@ -153,6 +304,7 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- Gene
 		}
 		fmt.Printf("Found peers %v\n", peers)
 	case "connect":
+
 		prompt := promptui.Prompt{
 			Label: "Key",
 		}
@@ -171,34 +323,17 @@ func handleInput(h host.Host, dht *dht.IpfsDHT, input string, dhtHan chan<- Gene
 			panic(err)
 		}
 
-		generalReq := new(GeneralRequest)
-		generalClosestReq := new(GeneralRequest_ClosestProviderRequest)
-		generalClosest := new(ClosestProviderRequest)
-		generalClosest.Key = keyraw
-		generalClosestReq.ClosestProviderRequest = generalClosest
-		generalReq.GeneralRequestKind = generalClosestReq
-
 		tun := newTunnel(stream, closestPeers[1])
 
-		defer func(tun tunnel) {
-			fmt.Println("closing the tunnel")
-			err := tun.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(tun)
+		defer closeTunnel(tun)
 
 		tun2 := newTunnel(tun, closestPeers[2])
 
-		handler := &Handler{}
-		handler.writeMessage(tun2, generalReq)
+		defer closeTunnel(tun2)
 
-		generalResp := new(GeneralResponse)
-		err = handler.readMessage(tun2, generalResp)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("Read Message %+v\n", generalResp)
+		cR := new(commandRound)
+		cR.connection = tun2
+		cR.newRound()
 	}
 
 }
