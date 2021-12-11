@@ -1,0 +1,8 @@
+framework module "Dione_mobile" {
+	header "ref.h"
+    header "Dione_mobile.objc.h"
+    header "Universe.objc.h"
+    header "Dione_mobile.h"
+
+    export *
+}
