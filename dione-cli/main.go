@@ -1,8 +1,8 @@
 package main
 
 import (
-	dione "dione-go"
 	"fmt"
+	dione "github.com/Dione-Software/dione-go"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/manifoldco/promptui"
 )
