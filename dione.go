@@ -23,7 +23,7 @@ type DioneInterface interface {
 	Closest(key string) []peer.ID
 	Put(key string, value []byte)
 	Get(key string) []byte
-	Connect(peer peer.ID) *DioneTunnel
+	Connect(p peer.ID) *DioneTunnel
 }
 
 func NewDioneHost(port int) DioneHost {
@@ -85,12 +85,20 @@ func (dh DioneHost) Get(key string) []byte {
 	return valueData
 }
 
-func (dh DioneHost) Connect(peer peer.ID) *DioneTunnel {
-	stream, err := dh.internalHost.NewStream(ctx.TODO(), peer, requestId)
+func (dh DioneHost) Connect(p peer.ID) *DioneTunnel {
+	peers := dh.GetPeers()
+	var streampeer peer.ID
+	for _, ip := range peers {
+		if ip != p {
+			streampeer = ip
+			break
+		}
+	}
+	stream, err := dh.internalHost.NewStream(ctx.TODO(), streampeer, requestId)
 	if err != nil {
 		panic(err)
 	}
-	tun := newTunnel(stream, peer)
+	tun := newTunnel(stream, p)
 
 	ret := new(DioneTunnel)
 	ret.connection = tun
