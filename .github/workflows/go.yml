@@ -91,6 +91,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Dione_mobile.xcframework
+          path: Dione_mobile.xcframework/
 
       - run: ls -a
       - uses: ncipollo/release-action@v1
@@ -111,6 +112,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: Dione_mobile.xcframework
+          path: Dione_mobile.xcframework/
       - name: Push directory to another repository
         uses: cpina/github-action-push-to-another-repository@v1.3
         env:
@@ -119,5 +121,5 @@ jobs:
           source-directory: Dione_mobile.xcframework
           destination-github-username: umgefahren
           destination-repository-name: Dione_mobile.xcframework
-          targe-branch: main
+          target-branch: main
           user-email: action@github.com
