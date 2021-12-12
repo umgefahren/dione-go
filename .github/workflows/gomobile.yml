@@ -46,4 +46,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Dione Mobile Framework
-          path: $(GITHUB_WORKSPACE)/dione-mobile/Dione_mobile.xcframework/
+          path: /dione-mobile/Dione_mobile.xcframework/
