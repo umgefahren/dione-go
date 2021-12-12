@@ -40,7 +40,11 @@ jobs:
 
       - name: Build Artifacts
         working-directory: ./dione-mobile
-        run: gomobile bind -target="ios,iossimulator,macos,maccatalyst"
+        run: gomobile bind -target="ios"
+        # run: gomobile bind -target="ios,iossimulator,macos,maccatalyst"
+
+      - name: List Framework
+        run: ls dione-mobile
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
