@@ -32,10 +32,10 @@ jobs:
         run: go install golang.org/x/mobile/cmd/gomobile@latest
 
       - name: Init Go Mobile
-        run: cd $(GITHUB_WORKSPACE)/dione-mobile && gomobile init
+        run: cd dione-mobile && gomobile init
 
       - name: Build Artifacts
-        run: cd $(GITHUB_WORKSPACE)/dione-mobile && gomobile bind -target="ios,iossimulator,macos,maccatalyst"
+        run: cd dione-mobile && gomobile bind -target="ios,iossimulator,macos,maccatalyst"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
