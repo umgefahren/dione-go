@@ -31,8 +31,6 @@ jobs:
       - name: Get Dependencies
         run: |
           go get  -d ./...
-          go mod download golang.org/x/mobile
-          go mod tidy
 
       - name: Install Go Mobile
         run: | 
