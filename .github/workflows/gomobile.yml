@@ -29,7 +29,9 @@ jobs:
         run: sh setup.sh
 
       - name: Get Dependencies
-        run: go get  -d ./...
+        run: |
+        go get  -d ./...
+        go mod download golang.org/x/mobile
 
       - name: Install Go Mobile
         run: | 
