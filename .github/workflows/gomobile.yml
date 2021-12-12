@@ -33,11 +33,9 @@ jobs:
           go install golang.org/x/mobile/cmd/gomobile@latest
           go install golang.org/x/mobile/cmd/gobind@latest
 
-      - name: Init Go Mobile
-        run: cd dione-mobile && gomobile init
-
       - name: Build Artifacts
-        run: cd dione-mobile && gomobile bind -target="ios,iossimulator,macos,maccatalyst"
+        working-directory: ./dione-mobile
+        run: gomobile bind -target="ios,iossimulator,macos,maccatalyst"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
