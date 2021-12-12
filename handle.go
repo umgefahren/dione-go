@@ -85,7 +85,8 @@ func (h *Handler) handleStream(stream network.Stream) {
 			if err == io.EOF || err == errors.New("stream reset") {
 				return
 			}
-			panic(err)
+			fmt.Printf("Got Error during handling of request from %v -> %v\n", stream.Conn().RemotePeer(), err)
+			return
 		}
 
 		if m.GetClosestProviderRequest() != nil {

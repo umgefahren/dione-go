@@ -32,7 +32,7 @@ func (d *DioneMobileTunnel) GetKad(key string) []byte {
 	return d.internal.Get(key)
 }
 
-func (d *DioneMobileTunnel) Connect(p string) DioneMobileInterface {
+func (d *DioneMobileTunnel) Connect(p string) *DioneMobileTunnel {
 	targetPeer, err := peer.Decode(p)
 	if err != nil {
 		panic(err)
@@ -47,7 +47,7 @@ type DioneMobileInterface interface {
 	Closest(key string) string
 	PutKad(key string, value []byte)
 	GetKad(key string) []byte
-	Connect(peer string) DioneMobileInterface
+	Connect(peer string) *DioneMobileTunnel
 }
 
 func New() *DioneMobileHost {
@@ -75,7 +75,7 @@ func (dmh *DioneMobileHost) GetKad(key string) []byte {
 	return dmh.internal.Get(key)
 }
 
-func (dmh *DioneMobileHost) Connect(p string) DioneMobileInterface {
+func (dmh *DioneMobileHost) Connect(p string) *DioneMobileTunnel {
 	targetPeer, err := peer.Decode(p)
 	if err != nil {
 		panic(err)
