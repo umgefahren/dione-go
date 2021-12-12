@@ -70,7 +70,7 @@ jobs:
 
       - name: Build Artifacts
         working-directory: ./dione-mobile
-        run: gomobile bind -target="ios"
+        run: gomobile bind -target="ios,iossimulator,macos,maccatalyst"
         # run: gomobile bind -target="ios,iossimulator,macos,maccatalyst"
 
       - name: List Framework
@@ -95,5 +95,5 @@ jobs:
           name: Dione Mobile Framework
           allowUpdates: true
           prerelease: true
-          artifacts: "Dione_mobile.xcframework"
+          artifacts: Dione_mobile.xcframework
           token: ${{ secrets.GITHUB_TOKEN }}
