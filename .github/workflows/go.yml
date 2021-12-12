@@ -19,7 +19,7 @@ jobs:
           go-version: 1.17
 
       - name: Install Protoc
-        
+
         uses: arduino/setup-protoc@v1
 
       - name: Install protoc-gen-go
@@ -28,9 +28,8 @@ jobs:
       - name: Generate Protobufs
         run: sh setup.sh
 
-
       - name: Get Dependencies
-        run: go get github.com/Dione-Software/dione-go
+        run: go get  -d ./...
 
       - name: Build
         run: go build -v ./...
