@@ -92,15 +92,19 @@ jobs:
         with:
           name: Dione_mobile.xcframework
           path: Dione_mobile.xcframework/
-
       - run: ls -a
+      - name: Easy Zip Files
+        uses: vimtor/action-zip@v1
+        with:
+          files: Dione_mobile.xcframework/
+          dest: Dione_mobile.xcframework.zip
       - uses: ncipollo/release-action@v1
         with:
           tag: latest
           name: Dione Mobile Framework
           allowUpdates: true
           prerelease: true
-          artifacts: Dione_mobile.xcframework
+          artifacts: Dione_mobile.xcframework.zip
           token: ${{ secrets.GITHUB_TOKEN }}
 
   push_to_repository:
@@ -118,8 +122,8 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: Dione_mobile.xcframework
-          destination-github-username: umgefahren
-          destination-repository-name: Dione_mobile.xcframework
+          source-directory: 'Dione_mobile.xcframework'
+          destination-github-username: 'umgefahren'
+          destination-repository-name: 'Dione_mobile.xcframework'
           target-branch: main
           user-email: action@github.com
