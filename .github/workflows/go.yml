@@ -92,6 +92,7 @@ jobs:
         with:
           name: Dione_mobile.xcframework
 
+      - run: ls -a
       - uses: ncipollo/release-action@v1
         with:
           tag: latest
@@ -118,4 +119,5 @@ jobs:
           source-directory: Dione_mobile.xcframework
           destination-github-username: umgefahren
           destination-repository-name: Dione_mobile.xcframework
+          targe-branch: main
           user-email: action@github.com
