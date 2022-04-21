@@ -7,7 +7,7 @@ require (
 	github.com/libp2p/go-libp2p v0.16.0
 	github.com/libp2p/go-libp2p-core v0.11.0
 	github.com/libp2p/go-libp2p-kad-dht v0.15.0
-	github.com/libp2p/go-libp2p-noise v0.3.0
+	github.com/libp2p/go-libp2p-noise v0.4.0
 	github.com/libp2p/go-libp2p-record v0.1.3
 	github.com/manifoldco/promptui v0.9.0
 	google.golang.org/protobuf v1.27.1
@@ -119,7 +119,6 @@ require (
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/mobile v0.0.0-20211207041440-4e6c2922fdee // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
